@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/commons-configuration-1.6.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/commons-lang-2.4.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/commons-logging-api-1.0.4.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/hadoop-ant-0.20.203.0.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/hadoop-core-0.20.203.0.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/hadoop-tools-0.20.203.0.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/hbase-0.92.0.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/log4j-1.2.15.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/mysql-connector-java-3.1.14-bin.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/slf4j-api-1.5.8.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/slf4j-log4j12-1.5.8.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/sqlbuilder-2.0.11.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/zookeeper-3.4.2.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
