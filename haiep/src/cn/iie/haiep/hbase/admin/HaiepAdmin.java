@@ -18,6 +18,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -26,6 +28,8 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cn.iie.haiep.hbase.store.HBaseTableInfo;
 
@@ -43,7 +47,30 @@ public class HaiepAdmin {
 
 	public HaiepAdmin() {
 	}
+	
+	public void initialize() {
+		this.conf = HBaseConfiguration.create();
+		try {
+			this.admin = new HBaseAdmin(conf);
+			//TODO initialize tableInfo.
+		} catch (MasterNotRunningException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} catch (ZooKeeperConnectionException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		if (autoCreateSchema) {
+			try {
+				createSchema();
+			} catch (IOException e) {
+				logger.error(e.getMessage());
+				e.printStackTrace();
+			}
+		}
+	}
 
+	
 	public void createSchema() throws IOException {
 		if (admin.tableExists(tableInfo.getTableName())) {
 			return;
@@ -86,4 +113,5 @@ public class HaiepAdmin {
 		this.conf = conf;
 	}
 
+	public static final Logger logger = LoggerFactory.getLogger(HaiepAdmin.class);
 }
