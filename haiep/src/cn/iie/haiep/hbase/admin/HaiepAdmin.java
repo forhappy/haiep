@@ -27,7 +27,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 
-import cn.iie.haiep.hbase.store.HBaseTable;
+import cn.iie.haiep.hbase.store.HBaseTableInfo;
 
 public class HaiepAdmin {
 
@@ -39,33 +39,33 @@ public class HaiepAdmin {
 
 	private boolean autoCreateSchema = true;
 
-	private HBaseTable mapping;
+	private HBaseTableInfo tableInfo;
 
 	public HaiepAdmin() {
 	}
 
 	public void createSchema() throws IOException {
-		if (admin.tableExists(mapping.getTableName())) {
+		if (admin.tableExists(tableInfo.getTableName())) {
 			return;
 		}
-		HTableDescriptor tableDesc = mapping.getTable();
+		HTableDescriptor tableDesc = tableInfo.getTable();
 
 		admin.createTable(tableDesc);
 	}
 
 	public void deleteSchema() throws IOException {
-		if (!admin.tableExists(mapping.getTableName())) {
+		if (!admin.tableExists(tableInfo.getTableName())) {
 			if (table != null) {
 				table.getWriteBuffer().clear();
 			}
 			return;
 		}
-		admin.disableTable(mapping.getTableName());
-		admin.deleteTable(mapping.getTableName());
+		admin.disableTable(tableInfo.getTableName());
+		admin.deleteTable(tableInfo.getTableName());
 	}
 
 	public boolean schemaExists() throws IOException {
-		return admin.tableExists(mapping.getTableName());
+		return admin.tableExists(tableInfo.getTableName());
 	}
 
 	public void flush() throws IOException {

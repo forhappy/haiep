@@ -16,7 +16,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 /**
  * Table definitions for HBase
  */
-public class HBaseTable {
+public class HBaseTableInfo {
 
 	private Map<String, HTableDescriptor> tableDescriptors = new HashMap<String, HTableDescriptor>();
 
@@ -26,7 +26,7 @@ public class HBaseTable {
 	// a map from field name to hbase column
 	private Map<String, HBaseColumn> columnMap = new HashMap<String, HBaseColumn>();
 
-	public HBaseTable() {
+	public HBaseTableInfo() {
 	}
 
 	public void setTableName(String tableName) {
