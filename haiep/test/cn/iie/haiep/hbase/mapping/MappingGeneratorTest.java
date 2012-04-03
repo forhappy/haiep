@@ -7,7 +7,6 @@ public class MappingGeneratorTest {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 		MappingGen mapping = new MappingGen();
 		String filePath = "/home/forhappy/SCM-Repos/GIT/Haiep/haiep/conf/haiep-mapping-example.xml";
 		mapping.setFilePath(filePath);
