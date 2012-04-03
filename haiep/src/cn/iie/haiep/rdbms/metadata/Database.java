@@ -244,7 +244,7 @@ public class Database {
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		} finally {
-			iterTables = listTables.iterator();
+			iterTable = listTables.iterator();
 			this.close();
 		}
 	}
@@ -280,6 +280,17 @@ public class Database {
 		return null;
 	}
 	
+	public RowSchema findRowSchemaByTableName(String tableName) {
+		Iterator iter = listTables.iterator();
+		while (iter.hasNext()) {
+			Table table = (Table) iter.next();
+			if (table.getTableName().equalsIgnoreCase(tableName)) {
+				RowSchema rowSchema = table.getRowSchema();
+			}
+		}
+		return null;
+	}
+	
 	private void generateTables() {
 		try {
 			DatabaseMetaData dbmd = conn.getMetaData();
@@ -301,14 +312,14 @@ public class Database {
 	}
 	
 	public Boolean hasNextTable() {
-		return iterTables.hasNext();
+		return iterTable.hasNext();
 	}
 	
 	public Table next() {
-		return (Table) iterTables.next();
+		return (Table) iterTable.next();
 	}
 	
-	Iterator iterTables = null;
+	private Iterator<Table> iterTable = null;
 	
 	private ResultSet rsTables = null;
 	/**

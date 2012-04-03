@@ -119,14 +119,14 @@ public class Table {
 	/**
 	 * @return the row
 	 */
-	public RowSchema getRow() {
+	public RowSchema getRowSchema() {
 		return row;
 	}
 
 	/**
 	 * @param row the row to set
 	 */
-	public void setRow(RowSchema row) {
+	public void setRowSchema(RowSchema row) {
 		this.row = row;
 	}
 

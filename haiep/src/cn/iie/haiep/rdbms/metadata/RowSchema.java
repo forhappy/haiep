@@ -6,6 +6,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -72,6 +73,15 @@ public class RowSchema {
 		 */
 		
 		setPrimaryKeys();
+		iterColumn = listColumns.iterator();
+	}
+	
+	public Boolean hasNextColumn() {
+		return iterColumn.hasNext();
+	}
+	
+	public Column next() {
+		return iterColumn.next();
 	}
 
 	/**
@@ -208,6 +218,12 @@ public class RowSchema {
 	 * columns in a row.
 	 */
 	private List<Column> listColumns = null;
+	
+	/**
+	 * Column iterator.
+	 */
+	private Iterator<Column> iterColumn = null;
+	
 	private static final Logger logger = LoggerFactory
 			.getLogger(RowSchema.class);
 }

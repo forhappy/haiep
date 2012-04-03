@@ -43,7 +43,30 @@ public class DatabaseTest {
 			System.out.println("Table Schema: " + table.getTableSchema());
 			System.out.println("Table Type :" + table.getTableType());
 			System.out.println("Remarks: " + table.getRemarks());
+			/**
+			 * test RowSchema.
+			 */
+			RowSchema rowSchema = table.getRowSchema();
+			while(rowSchema.hasNextColumn()) {
+				Column column = rowSchema.next();
+				System.out.println("===========");
+				System.out.println("Table Catalog: " + column.getTableCatalog());
+				System.out.println("Table Name: " + column.getTableName());
+				System.out.println("Table Schema: " + column.getTableSchema());
+				System.out.println("Column Name: " + column.getColumnName());
+				System.out.println("Data Type: " + column.getDataType());
+				System.out.println("Type Name: " + column.getTypeName());
+				System.out.println("Column Size: " + column.getColumnSize());
+				System.out.println("Nullable: " + column.getIsNullable());
+				System.out.println("Ordinal Position: " + column.getOrdinalPosition());
+				System.out.println("Remarks: " + column.getRemarks());
+				System.out.println("===========");
+				System.out.println("");
+			}
+			System.out.println("************");
 			System.out.println("");
+			System.out.println("");
+			
 		}
 		
 		/**
@@ -52,6 +75,8 @@ public class DatabaseTest {
 /*		String tableName = "eid_id";
 		Table tablex = database.findTableByName(tableName);
 		System.out.println("Table Name: " + tablex.getTableName());*/
+		
+		
 	}
 
 }
