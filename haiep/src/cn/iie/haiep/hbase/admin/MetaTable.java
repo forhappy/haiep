@@ -6,6 +6,9 @@ package cn.iie.haiep.hbase.admin;
  * Date: 2012-4-3, 9:35 PM.
  */
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -14,12 +17,19 @@ import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTablePool;
+import org.apache.hadoop.hbase.client.Put;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cn.iie.haiep.hbase.store.HBaseTableInfo;
+import cn.iie.haiep.rdbms.metadata.Column;
+import cn.iie.haiep.rdbms.metadata.Database;
+import cn.iie.haiep.rdbms.metadata.RowSchema;
+import cn.iie.haiep.rdbms.metadata.Table;
 
 public class MetaTable {
+	
 	private HBaseAdmin admin;
 	
 	private HTable table;
@@ -31,10 +41,80 @@ public class MetaTable {
 	public static final String tableName = "METATABLE";
 	
 	/**
-	 * TODO replace REGION with your desired string.
+	 * TODO replace FAMILY with your desired string.
 	 */
 	public static final String FAMILY = "HAIEP";
 	
+	/**
+	 * TODO replace REGION with your desired string.
+	 */
+	public static final String REGION = "HAIEP";
+	
+	/**
+	 * @return the family
+	 */
+	public static String getFamily() {
+		return FAMILY;
+	}
+
+	/**
+	 * @return the region
+	 */
+	public static String getRegion() {
+		return REGION;
+	}
+
+	public void importMetadataFromRDBMS(
+			String url,
+			String user,
+			String password,
+			String catalog) {
+		HTablePool pool = new HTablePool(conf, 1024);
+		HTable table = (HTable) pool.getTable(tableName);
+		
+		Database db = new Database(url, user, password, catalog);
+		db.fillTableLists();
+
+//		String rowkey = "dummy";
+//		Put put = new Put(rowkey.getBytes());
+//		put.add(family, qualifier, value);
+
+		while(db.hasNextTable()) {
+			Table tbl = db.next();
+			
+			/**
+			 * beginOfRowkey = REGION.TABLE_NAME
+			 */
+			String beginOfRowkey = REGION + "." + tbl.getTableName(); 
+			RowSchema rowSchema = tbl.getRowSchema();
+			while(rowSchema.hasNextColumn()) {
+				Column column = rowSchema.next();
+				
+				/**
+				 * rowkey = REGION.TABLENAME.COLUMN_NAME
+				 */
+				String rowkey = beginOfRowkey + "." + column.getColumnName();
+				Put put = new Put(rowkey.getBytes());
+				byte[] familyBytes = getFamily().getBytes();
+				put.add(familyBytes, "IsNil".getBytes(), column.getIsNullable().getBytes());
+				put.add(familyBytes, "Type".getBytes(), column.getTypeName().getBytes());
+				Integer len = new Integer(column.getColumnSize());
+				put.add(familyBytes, "Len".getBytes(), len.toString().getBytes());
+				put.add(familyBytes, "IsKey".getBytes(), column.getIsPrimaryKey().toString().getBytes());
+				try {
+					table.put(put);
+				} catch (IOException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+		
+	}
+	
+	/**
+	 * initialize conf and admin.
+	 */
 	public void initialize() {
 		this.conf = HBaseConfiguration.create();
 		try {
@@ -47,6 +127,11 @@ public class MetaTable {
 			 * set table name. 
 			 */
 			setTableName(tableName);
+			
+			/**
+			 * add table.
+			 */
+			addTable(tableName);
 			
 			/**
 			 * add family
@@ -69,6 +154,8 @@ public class MetaTable {
 			}
 		}
 	}
+	
+
 	
 	/**
 	 * create schema.
@@ -96,6 +183,14 @@ public class MetaTable {
 	}
 	
 	/**
+	 * add table.
+	 * @param tableName
+	 */
+	public void addTable(String tableName) {
+		tableInfo.addTable(tableName);
+	}
+	
+	/**
 	 * add family name.
 	 * @param familyName family name.
 	 */
@@ -104,7 +199,8 @@ public class MetaTable {
 			tableInfo.addColumnFamily(tableInfo.getTableName(), 
 					familyName, null, null, null, null, null, null, null);
 		} else {
-			tableInfo.addColumnFamily(tableInfo.getTableName(), FAMILY);
+			tableInfo.addColumnFamily(tableInfo.getTableName(), FAMILY,
+					null, null, null, null, null, null, null);
 		}
 	}
 	
