@@ -7,7 +7,10 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +45,7 @@ public class Database {
 	public Database(List<Table> listTables) {
 		super();
 		this.listTables = listTables;
+		
 	}
 	
 	
@@ -202,7 +206,6 @@ public class Database {
 	}
 	
 	public void fillTableLists() {
-		Table table = new Table();
 		
 		/**
 		 * get all tables in the catalog.
@@ -212,6 +215,7 @@ public class Database {
 		try {
 			while (nextTable()) {
 				try {
+					Table table = new Table();
 					table.setTableName(rsTables.getString("TABLE_NAME"));
 					table.setTableCatalog(rsTables.getString("TABLE_CAT"));
 					table.setTableSchema(rsTables.getString("TABLE_SCHEM"));
@@ -239,7 +243,41 @@ public class Database {
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
+		} finally {
+			iterTables = listTables.iterator();
+			this.close();
 		}
+	}
+	
+	public void close() {
+		try {
+			RDBMSDriverManager.close(conn);
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	
+	public void closeQuietly() {
+		RDBMSDriverManager.closeQuietly(conn);
+	}
+	
+	/**
+	 * Find the table description specified by name, iff there exits such an table, 
+	 * then return it; otherwise return null.
+	 * @param tableName
+	 * @return Table description specified by tableName, iff there exits such an table,
+	 * then return it; otherwise return null.
+	 */
+	public Table findTableByName(String tableName) {
+		Iterator iter = listTables.iterator();
+		while (iter.hasNext()) {
+			Table table = (Table) iter.next();
+			if (table.getTableName().equalsIgnoreCase(tableName)) {
+				return table;
+			}
+		}
+		return null;
 	}
 	
 	private void generateTables() {
@@ -262,6 +300,15 @@ public class Database {
 		return false;
 	}
 	
+	public Boolean hasNextTable() {
+		return iterTables.hasNext();
+	}
+	
+	public Table next() {
+		return (Table) iterTables.next();
+	}
+	
+	Iterator iterTables = null;
 	
 	private ResultSet rsTables = null;
 	/**
