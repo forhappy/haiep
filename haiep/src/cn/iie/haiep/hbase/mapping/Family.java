@@ -3,12 +3,15 @@ package cn.iie.haiep.hbase.mapping;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Construct hbase column family generator.
  * @author forhappy
  * Date: 2012-4-3, 6:05 PM.
  */
-public class FamilyGenerator {
+public class Family {
 	
 	/**
 	 * @return the index
@@ -41,33 +44,33 @@ public class FamilyGenerator {
 	/**
 	 * @return the qualifiers
 	 */
-	public List<QualifierGenerator> getQualifiers() {
+	public List<Qualifier> getQualifiers() {
 		return qualifiers;
 	}
 
 	/**
 	 * Default constructor.
 	 */
-	public FamilyGenerator() {
+	public Family() {
 		index = -1;
-		qualifiers = new ArrayList<QualifierGenerator>();
+		qualifiers = new ArrayList<Qualifier>();
 	}
 	
 	/**
 	 * @param name The name of a family.
 	 */
-	public FamilyGenerator(String name) {
+	public Family(String name) {
 		super();
 		this.name = name;
 		this.index = -1;
-		qualifiers = new ArrayList<QualifierGenerator>();
+		qualifiers = new ArrayList<Qualifier>();
 	}
 
 	/**
 	 * Add a new qualifier schema to a family.
 	 * @param qualifer The qualifier that is to added.
 	 */
-	public void addQualifier(QualifierGenerator qualifer) {
+	public void addQualifier(Qualifier qualifer) {
 		qualifiers.add(qualifer);
 	}
 	
@@ -75,7 +78,7 @@ public class FamilyGenerator {
 	 * Add a set qualifiers schema to a family.
 	 * @param qualifiers The qualifiers that are to added.
 	 */
-	public void addQaulifiers(List<QualifierGenerator> qualifiers) {
+	public void addQaulifiers(List<Qualifier> qualifiers) {
 		qualifiers.addAll(qualifiers);
 	}
 	
@@ -83,7 +86,7 @@ public class FamilyGenerator {
 	 * Delete a qualifier.
 	 * @param qualifier The qualifier to be deleted.
 	 */
-	public void deleteQualifier(QualifierGenerator qualifier) {
+	public void deleteQualifier(Qualifier qualifier) {
 		qualifiers.remove(qualifier);
 	}
 	
@@ -92,10 +95,13 @@ public class FamilyGenerator {
 	 * @param name The qualifier name. 
 	 * @return The qualifier that match the name.
 	 */
-	public QualifierGenerator getQualifierByName(String name) {
+	public Qualifier getQualifierByName(String name) {
 		while (next()) {
-			if (current().getName().equalsIgnoreCase(name))
-				return qualifiers.get(index);
+			String tmpName = current().getName();
+			if (tmpName != null) {
+				if (tmpName.equalsIgnoreCase(name))
+					return qualifiers.get(index);
+			}
 		}
 		return null;
 	}
@@ -105,17 +111,20 @@ public class FamilyGenerator {
 	 * @param name The original column name. 
 	 * @return The qualifier that match the original column.
 	 */
-	public QualifierGenerator getQualifierByOrigColumn(String origColumn) {
+	public Qualifier getQualifierByField(String field) {
 		while (next()) {
-			if (current().getName().equalsIgnoreCase(origColumn))
-				return qualifiers.get(index);
+			String tmpField = current().getField();
+			if (tmpField != null) {
+				if (tmpField.equalsIgnoreCase(field))
+					return qualifiers.get(index);
+			}
 		}
 		return null;
 	}
 	
 	/**
 	 * Check if there exists another FamilyGenerator object 
-	 * in the List<QualifierGenerator> qualifiers.
+	 * in the List<Qualifier> qualifiers.
 	 * @return True if it indeed exist a FamilyGenerator object, 
 	 * otherwise return false.
 	 */
@@ -131,10 +140,10 @@ public class FamilyGenerator {
 	
 	/**
 	 * Return the current FamilyGenerator object pointed by index,
-	 * if List<QualifierGenerator> qualifiers is empty, return null.
+	 * if List<Qualifier> qualifiers is empty, return null.
 	 * @return
 	 */
-	public QualifierGenerator current() {
+	public Qualifier current() {
 		if (qualifiers.isEmpty()) return null;
 		return qualifiers.get(index);
 	}
@@ -152,5 +161,10 @@ public class FamilyGenerator {
 	/**
 	 * List of qualifiers within the family.
 	 */
-	List<QualifierGenerator> qualifiers = null;
+	List<Qualifier> qualifiers = null;
+	
+	/**
+	 * logger.
+	 */
+	public static final Logger logger = LoggerFactory.getLogger(Family.class);
 }

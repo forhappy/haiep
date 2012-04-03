@@ -1,21 +1,26 @@
 package cn.iie.haiep.hbase.mapping;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 /**
  * @author forhappy
  * Date: 2012-4-3, 9:44 PM.
  */
 
-public class QualifierGenerator {
+public class Qualifier {
 	
-	public QualifierGenerator() {}
+	public Qualifier() {}
 	/**
 	 * @param name The name of a qualifier.
-	 * @param field The original column from which in RDMS exports 
+	 * @param field The original column from which in RDBMS exports 
 	 * this column in HBase. 
-	 * @param type The original data type of a column in RDMS. 
-	 * @param condition Only the column in RDMS that satisfied with the specifying condition
+	 * @param type The original data type of a column in RDBMS. 
+	 * @param condition Only the column in RDBMS that satisfied with the specifying condition
 	 * can be exported.
 	 */
-	public QualifierGenerator(String name, String field, String type,
+	public Qualifier(String name, String field, String type,
 			String condition) {
 		super();
 		this.name = name;
@@ -92,14 +97,18 @@ public class QualifierGenerator {
 	private String field = null;
 	
 	/**
-	 * The original data type of a column in RDMS. 
+	 * The original data type of a column in RDBMS. 
 	 */
 	private String type = null;
 	
 	/**
-	 * Only the column in RDMS that satisfied with the condition
+	 * Only the column in RDBMS that satisfied with the condition
 	 * can be exported, if it remains null, no condition is restricted.
 	 */
 	private String condition = null;
 
+	/**
+	 * logger.
+	 */
+	public static final Logger logger = LoggerFactory.getLogger(Qualifier.class);
 }

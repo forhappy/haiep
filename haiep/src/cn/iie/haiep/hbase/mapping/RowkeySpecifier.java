@@ -6,6 +6,9 @@ package cn.iie.haiep.hbase.mapping;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class RowkeySpecifier {
 	
 	/**
@@ -78,4 +81,5 @@ public class RowkeySpecifier {
 	
 	private int index = -1;
 	private List<String> columns = null;
+	public static final Logger logger = LoggerFactory.getLogger(RowkeySpecifier.class);
 }

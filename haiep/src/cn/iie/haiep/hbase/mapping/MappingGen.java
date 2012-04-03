@@ -5,6 +5,9 @@ package cn.iie.haiep.hbase.mapping;
  */
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
@@ -62,7 +65,7 @@ import java.util.List;
  * @author forhappy
  * 
  */
-public class MappingGenerator {
+public class MappingGen {
 
 	/**
 	 * @return the rowkey
@@ -123,9 +126,9 @@ public class MappingGenerator {
 	/**
 	 * Default constructor.
 	 */
-	public MappingGenerator() {
+	public MappingGen() {
 		index = -1;
-		families = new ArrayList<FamilyGenerator>();
+		families = new ArrayList<Family>();
 	}
 
 	/**
@@ -134,10 +137,10 @@ public class MappingGenerator {
 	 * @param filePath
 	 *            Specifies the file path of mapping schema.
 	 */
-	public MappingGenerator(String filePath) {
+	public MappingGen(String filePath) {
 		this.filePath = filePath;
 		index = -1;
-		families = new ArrayList<FamilyGenerator>();
+		families = new ArrayList<Family>();
 	}
 
 	/**
@@ -178,6 +181,7 @@ public class MappingGenerator {
 					}
 				}
 			}
+			
 			setRowkey(rowkey);
 			
 			NodeList nodeListOfFamilies = doc.getElementsByTagName("family");
@@ -188,20 +192,20 @@ public class MappingGenerator {
 				NamedNodeMap familyAttributes = nodeFamily.getAttributes();
 				String familyAttribute = familyAttributes.getNamedItem("name").getNodeValue();
 				
-				FamilyGenerator family = new FamilyGenerator(familyAttribute);
+				Family family = new Family(familyAttribute);
 				
 				if (nodeFamily.getNodeType() == Node.ELEMENT_NODE) {
 					Element elementFamily = (Element) nodeFamily;
 					NodeList qualifierNodeList = elementFamily.getChildNodes();
 					for (int t = 0; t < qualifierNodeList.getLength(); t++) {
-						QualifierGenerator qualifier = new QualifierGenerator();
+						Qualifier qualifier = new Qualifier();
 						Node qualifierNode = qualifierNodeList.item(t);
 						if (qualifierNode.getNodeType() == Node.ELEMENT_NODE) {
 							Element qualifierElement = (Element) qualifierNode;
-							qualifier.setName(getQualiferSubElementValue("name", qualifierElement));
-							qualifier.setField(getQualiferSubElementValue("field", qualifierElement));
-							qualifier.setType(getQualiferSubElementValue("type", qualifierElement));
-							qualifier.setCondition(getQualiferSubElementValue("condition", qualifierElement));
+							qualifier.setName(getQualiferBySubElementValue("name", qualifierElement));
+							qualifier.setField(getQualiferBySubElementValue("field", qualifierElement));
+							qualifier.setType(getQualiferBySubElementValue("type", qualifierElement));
+							qualifier.setCondition(getQualiferBySubElementValue("condition", qualifierElement));
 							family.addQualifier(qualifier);
 						}
 					}
@@ -218,11 +222,11 @@ public class MappingGenerator {
 	 * @param familyName Family name.
 	 * @return A list of qualifiers within the specified family.
 	 */
-	public List<QualifierGenerator> getQualifiersByFamilyName(String familyName) {
+	public List<Qualifier> getQualifiersByFamilyName(String familyName) {
 		if (families.isEmpty()) return null;
-		List<QualifierGenerator> list = new ArrayList<QualifierGenerator>();
+		List<Qualifier> list = new ArrayList<Qualifier>();
 		for (int i = 0; i < families.size(); i++) {
-			FamilyGenerator family = families.get(i);
+			Family family = families.get(i);
 			if (family.getName().equalsIgnoreCase(familyName)) {
 				list = family.getQualifiers();
 			}
@@ -231,13 +235,13 @@ public class MappingGenerator {
 	}
 	
 	/**
-	 * Get a FamilyGenerator object by the family name.
+	 * Get a Family object by the family name.
 	 * @param familyName Family name.
-	 * @return  A FamilyGenerator object.
+	 * @return  A Family object.
 	 */
-	public FamilyGenerator getFamilyByName(String familyName) {
+	public Family getFamilyByName(String familyName) {
 		if (families.isEmpty()) return null;
-		FamilyGenerator family = new FamilyGenerator();
+		Family family = new Family();
 		for (int i = 0; i < families.size(); i++) {
 			if (families.get(i).getName().equalsIgnoreCase(familyName)) {
 				family = families.get(i);
@@ -247,9 +251,9 @@ public class MappingGenerator {
 	}
 	
 	/**
-	 * Check if there exists another FamilyGenerator object 
-	 * in the List<FamilyGenerator> families.
-	 * @return True if it indeed exist a FamilyGenerator object, 
+	 * Check if there exists another Family object 
+	 * in the List<Family> families.
+	 * @return True if it indeed exist a Family object, 
 	 * otherwise return false.
 	 */
 	public Boolean next() {
@@ -262,18 +266,18 @@ public class MappingGenerator {
 		}
 	}
 	/**
-	 * Reset index to -1, it means the start of List<FamilyGenerator> families.
+	 * Reset index to -1, it means the start of List<Family> families.
 	 */
 	public void reset() {
 		index = -1;
 	}
 	
 	/**
-	 * Return the current FamilyGenerator object pointed by index,
-	 * if List<FamilyGenerator> families is empty, return null.
+	 * Return the current Family object pointed by index,
+	 * if List<Family> families is empty, return null.
 	 * @return
 	 */
-	public FamilyGenerator current() {
+	public Family current() {
 		if (families.isEmpty()) return null;
 		return families.get(index);
 	}
@@ -283,7 +287,7 @@ public class MappingGenerator {
 	 * @param element
 	 * @return
 	 */
-	private  String getQualiferSubElementValue(String tag, Element element) {
+	private  String getQualiferBySubElementValue(String tag, Element element) {
 		if (element.getElementsByTagName(tag).getLength() == 0) {
 			return null;
 		} else {
@@ -316,7 +320,7 @@ public class MappingGenerator {
 	/**
 	 * Family list that illustrates the tables in HBase.
 	 */
-	private List<FamilyGenerator> families = null;
+	private List<Family> families = null;
 	
 	private RowkeySpecifier rowkey = null;
 	
@@ -324,4 +328,9 @@ public class MappingGenerator {
 	 * Index that specify the current family.
 	 */
 	private int index = -1;
+	
+	/**
+	 * logger.
+	 */
+	public static final Logger logger = LoggerFactory.getLogger(MappingGen.class);
 }
