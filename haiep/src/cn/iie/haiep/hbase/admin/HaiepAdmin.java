@@ -13,7 +13,9 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cn.iie.haiep.hbase.key.HKey;
 import cn.iie.haiep.hbase.store.HBaseTableInfo;
+import cn.iie.haiep.hbase.value.HValue;
 
 public class HaiepAdmin {
 
@@ -75,6 +77,10 @@ public class HaiepAdmin {
 
 	public boolean schemaExists() throws IOException {
 		return admin.tableExists(tableInfo.getTableName());
+	}
+	
+	public void put(HKey key, HValue value) {
+		//TODO implement this method as soon as possible.
 	}
 
 	public void flush() throws IOException {
