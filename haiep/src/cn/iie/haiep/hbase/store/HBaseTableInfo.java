@@ -5,7 +5,9 @@ package cn.iie.haiep.hbase.store;
  */
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -20,8 +22,8 @@ public class HBaseTableInfo {
 
 	private Map<String, HTableDescriptor> tableDescriptors = new HashMap<String, HTableDescriptor>();
 
-	// name of the primary table
-	private String tableName;
+	// s set of names of the tables.
+	private Set<String> tableNames = new HashSet<String>();
 
 	// a map from field name to hbase column
 	private Map<String, HBaseColumn> columnMap = new HashMap<String, HBaseColumn>();
@@ -29,22 +31,24 @@ public class HBaseTableInfo {
 	public HBaseTableInfo() {
 	}
 
-	public void setTableName(String tableName) {
-		this.tableName = tableName;
+	public void addTableName(String tableName) {
+		this.tableNames.add(tableName);
 	}
 
-	public String getTableName() {
-		return tableName;
+	public String getTableName(String tableName) {
+		if (tableName == null) {
+			return null;
+		} else { 
+			if (tableNames.contains(tableName))
+				return tableName;
+			else return null;
+		}
 	}
 
 	public void addTable(String tableName) {
 		if (!tableDescriptors.containsKey(tableName)) {
 			tableDescriptors.put(tableName, new HTableDescriptor(tableName));
 		}
-	}
-
-	public HTableDescriptor getTable() {
-		return getTable(tableName);
 	}
 
 	public HTableDescriptor getTable(String tableName) {
