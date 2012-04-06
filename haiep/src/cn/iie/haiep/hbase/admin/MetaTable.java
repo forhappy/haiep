@@ -215,7 +215,7 @@ public class MetaTable {
 	/**
 	 * meta table info.
 	 */
-	HBaseTableInfo tableInfo = null;
+	private HBaseTableInfo tableInfo = null;
 	
 	/**
 	 * Default constructor. 
