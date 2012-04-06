@@ -6,6 +6,7 @@ package cn.iie.haiep.hbase.store;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,6 +25,8 @@ public class HBaseTableInfo {
 
 	// s set of names of the tables.
 	private Set<String> tableNames = new HashSet<String>();
+	
+	private Iterator<String> iterName = null;
 
 	// a map from field name to hbase column
 	private Map<String, HBaseColumn> columnMap = new HashMap<String, HBaseColumn>();
@@ -47,12 +50,27 @@ public class HBaseTableInfo {
 
 	public void addTable(String tableName) {
 		if (!tableDescriptors.containsKey(tableName)) {
+			if (!tableNames.contains(tableName)) {
+				addTableName(tableName);
+				/**
+				 * TODO foolish implementation for initializing iterator iterName.
+				 */
+				iterName = tableNames.iterator();
+			}
 			tableDescriptors.put(tableName, new HTableDescriptor(tableName));
 		}
 	}
 
 	public HTableDescriptor getTable(String tableName) {
 		return tableDescriptors.get(tableName);
+	}
+	
+	public Boolean hasNextTableName() {
+		return iterName.hasNext();
+	}
+	
+	public String nextTableName() {
+		return iterName.next();
 	}
 
 	public void addColumnFamily(String tableName, String familyName,
