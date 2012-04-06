@@ -15,14 +15,14 @@ import org.slf4j.LoggerFactory;
 public class HValue {
 	public enum Type {STRING, BOOLEAN, INTEGER, LONG, FLOAT, DOUBLE}
 	
-	public static class Value {
+	public static class Value<T extends Object> {
 		private  Logger logger = 
 			LoggerFactory.getLogger(Value.class);
 		
 		Object object = null;
 		Type type = null;
 		
-		public Value(Object object) {
+		public Value(T object) {
 			super();
 			if (object instanceof String) {
 				this.object = object;
