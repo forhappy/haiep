@@ -123,7 +123,7 @@ public class MetaTable {
 			/**
 			 * set table name. 
 			 */
-			setTableName(tableName);
+			addTableName(tableName);
 			
 			/**
 			 * add table.
@@ -133,7 +133,7 @@ public class MetaTable {
 			/**
 			 * add family
 			 */
-			addColumnFamily(null);
+			addColumnFamily(tableName, null);
 			
 		} catch (MasterNotRunningException e) {
 			logger.error(e.getMessage());
@@ -144,7 +144,7 @@ public class MetaTable {
 		}
 		if (autoCreateSchema) {
 			try {
-				createSchema();
+				createSchema(tableName);
 			} catch (IOException e) {
 				logger.error(e.getMessage());
 				e.printStackTrace();
@@ -152,31 +152,30 @@ public class MetaTable {
 		}
 	}
 	
-
 	
 	/**
 	 * create schema.
 	 * @throws IOException
 	 */
-	public void createSchema() throws IOException {
-		if (admin.tableExists(tableInfo.getTableName())) {
+	public void createSchema(String tableName) throws IOException {
+		if (admin.tableExists(tableInfo.getTableName(tableName))) {
 			return;
 		}
-		HTableDescriptor tableDesc = tableInfo.getTable();
+		HTableDescriptor tableDesc = tableInfo.getTable(tableName);
 
 		admin.createTable(tableDesc);
 	}
 	
 	/**
-	 * Set table name.
+	 * Add table name.
 	 * @param tableName table name to be set.
 	 */
-	public void setTableName(String tableName) {
+	public void addTableName(String tableName) {
 		if (tableInfo == null) {
 			logger.warn("MetaTable object has to be constructed at first.");
 			return;
 		}
-		tableInfo.setTableName(tableName);
+		tableInfo.addTableName(tableName);
 	}
 	
 	/**
@@ -191,12 +190,12 @@ public class MetaTable {
 	 * add family name.
 	 * @param familyName family name.
 	 */
-	public void addColumnFamily(String familyName) {
+	public void addColumnFamily(String tableName, String familyName) {
 		if (familyName != null) {
-			tableInfo.addColumnFamily(tableInfo.getTableName(), 
+			tableInfo.addColumnFamily(tableInfo.getTableName(tableName), 
 					familyName, null, null, null, null, null, null, null);
 		} else {
-			tableInfo.addColumnFamily(tableInfo.getTableName(), FAMILY,
+			tableInfo.addColumnFamily(tableInfo.getTableName(tableName), FAMILY,
 					null, null, null, null, null, null, null);
 		}
 	}
@@ -205,12 +204,12 @@ public class MetaTable {
 	 * Get table name.
 	 * @return table name.
 	 */
-	public String getTableName() {
+	public String getTableName(String tableName) {
 		if (tableInfo == null) {
 			logger.warn("MetaTable object has to be constructed at first.");
 			return null;
 		}
-		return tableInfo.getTableName();
+		return tableInfo.getTableName(tableName);
 	}
 	
 	/**
@@ -223,7 +222,7 @@ public class MetaTable {
 	 */
 	public MetaTable() {
 		tableInfo = new HBaseTableInfo();
-		tableInfo.setTableName(tableName);
+		tableInfo.addTableName(tableName);
 	}
 
 	public MetaTable(HBaseTableInfo tableInfo) {
@@ -245,19 +244,19 @@ public class MetaTable {
 		this.tableInfo = tableInfo;
 	}
 	
-	public void deleteSchema() throws IOException {
-		if (!admin.tableExists(tableInfo.getTableName())) {
+	public void deleteSchema(String tableName) throws IOException {
+		if (!admin.tableExists(tableInfo.getTableName(tableName))) {
 			if (table != null) {
 				table.getWriteBuffer().clear();
 			}
 			return;
 		}
-		admin.disableTable(tableInfo.getTableName());
-		admin.deleteTable(tableInfo.getTableName());
+		admin.disableTable(tableInfo.getTableName(tableName));
+		admin.deleteTable(tableInfo.getTableName(tableName));
 	}
 
-	public boolean schemaExists() throws IOException {
-		return admin.tableExists(tableInfo.getTableName());
+	public boolean schemaExists(String tableName) throws IOException {
+		return admin.tableExists(tableInfo.getTableName(tableName));
 	}
 
 	public void flush() throws IOException {
