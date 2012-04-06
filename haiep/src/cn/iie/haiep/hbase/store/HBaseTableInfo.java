@@ -35,7 +35,9 @@ public class HBaseTableInfo {
 	}
 
 	public void addTableName(String tableName) {
-		this.tableNames.add(tableName);
+		if (!tableNames.contains(tableName)) {
+			this.tableNames.add(tableName);
+		}
 	}
 
 	public String getTableName(String tableName) {
@@ -52,11 +54,11 @@ public class HBaseTableInfo {
 		if (!tableDescriptors.containsKey(tableName)) {
 			if (!tableNames.contains(tableName)) {
 				addTableName(tableName);
-				/**
-				 * TODO foolish implementation for initializing iterator iterName.
-				 */
-				iterName = tableNames.iterator();
 			}
+			/**
+			 * TODO foolish implementation for initializing iterator iterName.
+			 */
+			iterName = tableNames.iterator();
 			tableDescriptors.put(tableName, new HTableDescriptor(tableName));
 		}
 	}
