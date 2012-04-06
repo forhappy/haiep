@@ -9,17 +9,35 @@ import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTablePool;
+import org.apache.hadoop.hbase.client.Put;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cn.iie.haiep.hbase.key.HKey;
 import cn.iie.haiep.hbase.store.HBaseTableInfo;
+import cn.iie.haiep.hbase.value.HColumn;
 import cn.iie.haiep.hbase.value.HValue;
+import cn.iie.haiep.rdbms.metadata.Database;
+import cn.iie.haiep.rdbms.metadata.RowSchema;
+import cn.iie.haiep.rdbms.metadata.Table;
 
 public class HaiepAdmin {
 
+	/**
+	 * TODO replace FAMILY with your desired string.
+	 */
+	public static final String FAMILY = "COMMONS";
+	
+	/**
+	 * TODO replace REGION with your desired string.
+	 */
+	public static final String REGION = "HAIEP";
+	
 	private HBaseAdmin admin;
+	
+	private HTablePool pool;
 
 	private HTable table;
 
@@ -28,7 +46,74 @@ public class HaiepAdmin {
 	private boolean autoCreateSchema = true;
 
 	private HBaseTableInfo tableInfo;
-
+	
+	private String username = null;
+	
+	private String password = null;
+	
+	private String url = null;
+	
+	private String catalog = null;
+	
+	/**
+	 * @return the username
+	 */
+	public String getUsername() {
+		return username;
+	}
+	/**
+	 * @param username the username to set
+	 */
+	public void setUsername(String username) {
+		this.username = username;
+	}
+	/**
+	 * @return the password
+	 */
+	public String getPassword() {
+		return password;
+	}
+	/**
+	 * @param password the password to set
+	 */
+	public void setPassword(String password) {
+		this.password = password;
+	}
+	/**
+	 * @return the url
+	 */
+	public String getUrl() {
+		return url;
+	}
+	/**
+	 * @param url the url to set
+	 */
+	public void setUrl(String url) {
+		this.url = url;
+	}
+	/**
+	 * @return the catalog
+	 */
+	public String getCatalog() {
+		return catalog;
+	}
+	/**
+	 * @param catalog the catalog to set
+	 */
+	public void setCatalog(String catalog) {
+		this.catalog = catalog;
+	}
+	
+	
+	public HaiepAdmin(String username, String password, String url,
+			String catalog) {
+		super();
+		this.username = username;
+		this.password = password;
+		this.url = url;
+		this.catalog = catalog;
+	}
+	
 	public HaiepAdmin() {
 	}
 	
@@ -36,7 +121,8 @@ public class HaiepAdmin {
 		this.conf = HBaseConfiguration.create();
 		try {
 			this.admin = new HBaseAdmin(conf);
-			//TODO initialize tableInfo.
+			tableInfo = new HBaseTableInfo();
+			initTableInfo();
 		} catch (MasterNotRunningException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -46,41 +132,101 @@ public class HaiepAdmin {
 		}
 		if (autoCreateSchema) {
 			try {
-				createSchema();
+				createSchemas();
 			} catch (IOException e) {
 				logger.error(e.getMessage());
 				e.printStackTrace();
 			}
 		}
 	}
-
 	
-	public void createSchema() throws IOException {
-		if (admin.tableExists(tableInfo.getTableName())) {
+	
+	/**
+	 * Add table name.
+	 * @param tableName table name to be set.
+	 */
+	public void addTableName(String tableName) {
+		if (tableInfo == null) {
+			logger.warn("MetaTable object has to be constructed at first.");
 			return;
 		}
-		HTableDescriptor tableDesc = tableInfo.getTable();
+		tableInfo.addTableName(tableName);
+	}
+	
+	/**
+	 * add table.
+	 * @param tableName
+	 */
+	public void addTable(String tableName) {
+		tableInfo.addTable(tableName);
+	}
+	
+	/**
+	 * add family name.
+	 * @param familyName family name.
+	 */
+	public void addColumnFamily(String tableName, String familyName) {
+		if (familyName != null) {
+			tableInfo.addColumnFamily(tableInfo.getTableName(tableName), 
+					familyName, null, null, null, null, null, null, null);
+		} else {
+			tableInfo.addColumnFamily(tableInfo.getTableName(tableName), FAMILY,
+					null, null, null, null, null, null, null);
+		}
+	}
+	
+	public void createSchemas() throws IOException {
+		if (tableInfo != null) {
+			while (tableInfo.hasNextTableName()) {
+				String tableName = tableInfo.nextTableName();
+				createSchema(tableName);
+			}
+		}
+	}
+
+	
+	public void createSchema(String tableName) throws IOException {
+		if (admin.tableExists(tableInfo.getTableName(tableName))) {
+			return;
+		}
+		HTableDescriptor tableDesc = tableInfo.getTable(tableName);
 
 		admin.createTable(tableDesc);
 	}
 
-	public void deleteSchema() throws IOException {
-		if (!admin.tableExists(tableInfo.getTableName())) {
+	public void deleteSchema(String tableName) throws IOException {
+		if (!admin.tableExists(tableInfo.getTableName(tableName))) {
 			if (table != null) {
 				table.getWriteBuffer().clear();
 			}
 			return;
 		}
-		admin.disableTable(tableInfo.getTableName());
-		admin.deleteTable(tableInfo.getTableName());
+		admin.disableTable(tableInfo.getTableName(tableName));
+		admin.deleteTable(tableInfo.getTableName(tableName));
 	}
 
-	public boolean schemaExists() throws IOException {
-		return admin.tableExists(tableInfo.getTableName());
+	public boolean schemaExists(String tableName) throws IOException {
+		return admin.tableExists(tableInfo.getTableName(tableName));
 	}
 	
-	public void put(HKey key, HValue value) {
-		//TODO implement this method as soon as possible.
+	public void put(String tableName, HKey key, HValue value) {
+		HTablePool pool = new HTablePool(conf, 1024);
+		HTable table = (HTable) pool.getTable(tableName);
+		
+		Put put = new Put(key.getRow());
+		while (value.hasNext()) {
+			HColumn column = value.next();
+			byte[] familyBytes = column.getFamily();
+			byte[] qualifierBytes = column.getQualifier();
+			byte[] valueBytes = column.getValue();
+			put.add(familyBytes, qualifierBytes, valueBytes);
+		}
+		try {
+			table.put(put);
+		} catch (IOException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 	public void flush() throws IOException {
@@ -102,4 +248,23 @@ public class HaiepAdmin {
 	}
 
 	public static final Logger logger = LoggerFactory.getLogger(HaiepAdmin.class);
+	
+	/**
+	 * Initializing tableInfo
+	 */
+	private void initTableInfo() {
+		Database db = new Database(url, username, password, catalog);
+		db.fillTableLists();
+		while (db.hasNextTable()) {
+			Table tbl = db.next();
+			
+			/**
+			 * Get table name.
+			 */
+			String tableName = REGION + "." + tbl.getTableName();
+			addTableName(tableName);
+			addTable(tableName);
+			addColumnFamily(tableName, null);
+		}
+	}
 }
