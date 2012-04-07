@@ -242,7 +242,7 @@ public class HaiepAdmin {
 			String tableName = REGION + "." + (String) entry.getKey();
 			List<Map<String, Object>> list = (List<Map<String, Object>>) entry.getValue();
 			/**
-			 * table to imgrate data.
+			 * table to migrate data.
 			 */
 			HTable table = (HTable) pool.getTable(tableName);
 			
