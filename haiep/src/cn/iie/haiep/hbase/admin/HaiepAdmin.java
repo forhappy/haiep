@@ -1,6 +1,9 @@
 package cn.iie.haiep.hbase.admin;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.conf.Configuration;
@@ -19,6 +22,7 @@ import cn.iie.haiep.hbase.key.HKey;
 import cn.iie.haiep.hbase.store.HBaseTableInfo;
 import cn.iie.haiep.hbase.value.HColumn;
 import cn.iie.haiep.hbase.value.HValue;
+import cn.iie.haiep.rdbms.export.SQLExporter;
 import cn.iie.haiep.rdbms.metadata.Database;
 import cn.iie.haiep.rdbms.metadata.RowSchema;
 import cn.iie.haiep.rdbms.metadata.Table;
@@ -227,6 +231,47 @@ public class HaiepAdmin {
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
+	}
+	
+	public void migrateData() {
+		HTablePool pool = new HTablePool(conf, 1024);
+		SQLExporter sqlExporter = 
+			new SQLExporter(url, username, password, catalog);
+		while(sqlExporter.hasNextDataTable()) {
+			Entry entry = sqlExporter.next();
+			String tableName = REGION + "." + (String) entry.getKey();
+			List<Map<String, Object>> list = (List<Map<String, Object>>) entry.getValue();
+			/**
+			 * table to imgrate data.
+			 */
+			HTable table = (HTable) pool.getTable(tableName);
+			
+			
+			for (int i = 0; i < list.size(); i++) {
+				
+				Put put = new Put((new Integer(i)).toString().getBytes());
+				
+				Map<String, Object> map = list.get(i);
+				for (Map.Entry<String, Object> m : map.entrySet()) {
+					
+					put.add(FAMILY.getBytes(), m.getKey().getBytes(), m.getValue().toString().getBytes());
+					
+//					System.out.println("Key: " + m.getKey());
+//					System.out.println("Value: " + m.getValue());
+					
+				}
+				try {
+					table.put(put);
+				} catch (IOException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+			
+			
+		}
+		
+		
 	}
 
 	public void flush() throws IOException {
