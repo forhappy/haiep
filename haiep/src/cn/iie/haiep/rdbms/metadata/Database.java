@@ -81,6 +81,7 @@ public class Database {
 			this.conn = this.driver.createConnection();
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
+			RDBMSDriverManager.closeQuietly(conn);
 			e.printStackTrace();
 		}
 		listTables = new ArrayList<Table>();
@@ -95,6 +96,7 @@ public class Database {
 						this.conn = this.driver.createConnection();
 					} catch (SQLException e) {
 						logger.error(e.getMessage());
+						RDBMSDriverManager.closeQuietly(conn);
 						e.printStackTrace();
 					}
 				} else {
