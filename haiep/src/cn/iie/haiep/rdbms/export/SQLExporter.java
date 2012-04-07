@@ -49,7 +49,7 @@ public class SQLExporter {
 			driver = new RDBMSDriverManager();
 			conn = RDBMSDriverManager.createConnection(this.url, this.user,
 					this.password);
-			stmt = conn.createStatement();
+//			stmt = conn.createStatement();
 			/**
 			 * fill metadata.
 			 */
@@ -58,15 +58,21 @@ public class SQLExporter {
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			RDBMSDriverManager.closeQuietly(conn);
-			RDBMSDriverManager.closeQuietly(stmt);
+//			RDBMSDriverManager.closeQuietly(stmt);
 			e.printStackTrace();
 		}
 	}
 	
 	public void close() {
 		RDBMSDriverManager.closeQuietly(conn);
-		RDBMSDriverManager.closeQuietly(stmt);
-		RDBMSDriverManager.closeQuietly(rslt);
+		for (Map.Entry<String, PreparedStatement> m : preStmtsMap.entrySet()) {
+			PreparedStatement pstmt = m.getValue();
+			RDBMSDriverManager.closeQuietly(pstmt);
+		}
+		for (Map.Entry<String, ResultSet> m : resultsetMap.entrySet()) {
+			ResultSet rs = m.getValue();
+			RDBMSDriverManager.closeQuietly(rs);
+		}
 	}
 
 	/**
@@ -126,12 +132,15 @@ public class SQLExporter {
 	}
 	
 	private void generateFields(String tableName) {
+		PreparedStatement pstmt = null;
 		String query = "select * from ?";
 		try {
 			pstmt = (PreparedStatement) conn.prepareStatement(query);
 			pstmt.setString(1, tableName);
 			pstmt.executeQuery();
+			preStmtsMap.put(tableName, pstmt);
 		} catch (SQLException e) {
+			RDBMSDriverManager.closeQuietly(pstmt);
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
@@ -180,9 +189,10 @@ public class SQLExporter {
 
 	private RDBMSDriverManager driver = null;
 	private Connection conn = null;
-	private PreparedStatement pstmt = null;
-	private Statement stmt = null;
-	private ResultSet rslt = null;
+	private Map<String, PreparedStatement> preStmtsMap = new HashMap<String, PreparedStatement>();
+//	private Statement stmt = null;
+	
+	private Map<String, ResultSet> resultsetMap = new HashMap<String, ResultSet>();
 	
 	private Database database = null;
 	
