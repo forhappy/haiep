@@ -226,6 +226,18 @@ public class RDBMSDriverManager {
             stmt.close();
         }
     }
+    
+    /**
+     * Close a PreparedStatement, avoid closing if null.
+     *
+     * @param pstmt Statement to close.
+     * @throws SQLException if a database access error occurs
+     */
+    public static void close(PreparedStatement pstmt) throws SQLException {
+        if (pstmt != null) {
+            pstmt.close();
+        }
+    }
 
     /**
      * Close a Connection, avoid closing if null and hide
@@ -264,6 +276,30 @@ public class RDBMSDriverManager {
         }
 
     }
+    
+    /**
+     * Close a Connection, Statement and
+     * ResultSet.  Avoid closing if null and hide any
+     * SQLExceptions that occur.
+     *
+     * @param conn Connection to close.
+     * @param pstmt Statement to close.
+     * @param rs ResultSet to close.
+     */
+    public static void closeQuietly(Connection conn, PreparedStatement pstmt,
+            ResultSet rs) {
+
+        try {
+            closeQuietly(rs);
+        } finally {
+            try {
+                closeQuietly(pstmt);
+            } finally {
+                closeQuietly(conn);
+            }
+        }
+
+    }
 
     /**
      * Close a ResultSet, avoid closing if null and hide any
@@ -288,6 +324,20 @@ public class RDBMSDriverManager {
     public static void closeQuietly(Statement stmt) {
         try {
             close(stmt);
+        } catch (SQLException e) { // NOPMD
+            // quiet
+        }
+    }
+    
+    /**
+     * Close a PreparedStatement, avoid closing if null and hide
+     * any SQLExceptions that occur.
+     *
+     * @param pstmt Statement to close.
+     */
+    public static void closeQuietly(PreparedStatement pstmt) {
+        try {
+            close(pstmt);
         } catch (SQLException e) { // NOPMD
             // quiet
         }
