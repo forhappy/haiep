@@ -8,8 +8,12 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +57,17 @@ public class SQLExporter {
 			/**
 			 * fill metadata.
 			 */
-			fillMetadata();
+			fillMetadataMap();
+			
+			/**
+			 * generate fileds.
+			 */
+			fillStatements();
+			
+			/**
+			 * fill data table.
+			 */
+			fillDataMap();
 			
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
@@ -133,24 +147,93 @@ public class SQLExporter {
 	
 	private void generateFields(String tableName) {
 		PreparedStatement pstmt = null;
-		String query = "select * from ?";
+		ResultSet rs = null;
+		String query = "select * from " + tableName;
 		try {
 			pstmt = (PreparedStatement) conn.prepareStatement(query);
-			pstmt.setString(1, tableName);
-			pstmt.executeQuery();
+//			pstmt.setString(1, tableName);
+			rs = pstmt.executeQuery();
 			preStmtsMap.put(tableName, pstmt);
+			resultsetMap.put(tableName, rs);
 		} catch (SQLException e) {
 			RDBMSDriverManager.closeQuietly(pstmt);
+			RDBMSDriverManager.closeQuietly(rs);
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 		
 	}
+	
+	private void fillStatements() {
+		for (Map.Entry<String, Map<String, String>> m : metadataMap.entrySet()) {
+			String tableName = m.getKey();
+			generateFields(tableName);
+		}
+	}
+	
+	public Boolean hasNextDataTable(String tableName) {
+		if (tableName == null) {
+			logger.info("tableName can't be null");
+		}
+		if (dataMap.containsKey(tableName)) {
+			logger.info("No table %s found, try a different name please.", tableName);
+		}
+		return iterDataMap.hasNext();
+	}
+	
+	public Boolean hasNextDataTable() {
+		logger.info("Hello, in hasNextDataTable");
+		return iterDataMap.hasNext();
+	}
+	
+	public List<Map<String, Object>> nextDataTable() {
+		Entry thisEntry = (Entry) iterDataMap.next();
+		System.out.println(thisEntry.getKey());
+		System.out.println(thisEntry.getValue());
+		return (List<Map<String, Object>>) thisEntry.getValue();
+	}
+	
+	private void fillDataMap() {
+		//FIXME I've made a maaaaaaaaas...
+		if (metadataMap == null) {
+			logger.debug("Internal Error occured in SQLExporter.");
+			return;
+		}
+		for (Map.Entry<String, Map<String, String>> m : metadataMap.entrySet()) {
+			String tableName = m.getKey();
+			Map<String, String> columnMetadataMap = m.getValue();
+			List<Map<String, Object>> listData = new ArrayList<Map<String,Object>>();
+			try {
+				ResultSet rs = resultsetMap.get(tableName);
+				while(rs.next()) {
+					Map<String, Object> map = new HashMap<String, Object>();
+					
+					for (Map.Entry<String, String> columnMap : columnMetadataMap.entrySet()) {
+						String columnLabel = columnMap.getKey();
+						Object object = rs.getObject(columnLabel);
+						map.put(columnLabel, object);
+					}
+					listData.add(map);
+				}
+				/**
+				 * put data into dataMap, which can get from tableName later.
+				 */
+				dataMap.put(tableName, listData);
+				
+			} catch (SQLException e) {
+				logger.error(e.getMessage());
+				e.printStackTrace();
+			}
+		}
+		iterDataMap = dataMap.entrySet().iterator();
+		
+	}
 
+	
 	/**
 	 * fill metadata, the class Database database. 
 	 */
-	private void fillMetadata() {
+	private void fillMetadataMap() {
 		database = new Database(url, user, password, catalog);
 		database.fillTableLists();
 		
@@ -158,26 +241,38 @@ public class SQLExporter {
 			Table tbl = database.next();
 			String tableName = tbl.getTableName();
 			RowSchema rowSchema = tbl.getRowSchema();
+			Map<String, String> columnMap = new HashMap<String, String>();
 			while (rowSchema.hasNextColumn()) {
 				Column column = rowSchema.next();
-				Map<String, String> columnMap = new HashMap<String, String>();
 				String columnName = column.getColumnName();
 				String typeName = column.getTypeName();
 				columnMap.put(columnName, typeName);
 				
-				/**
-				 * put table name and columnMap.
-				 */
-				map.put(tableName, columnMap);
 			}
+			/**
+			 * put table name and columnMap.
+			 */
+			metadataMap.put(tableName, columnMap);
 		}
 	}
 	
 	/**
 	 * a Map that contains the database metadata.
 	 */
-	private Map<String, Map<String, String>> map = 
+	private Map<String, Map<String, String>> metadataMap = 
 		new HashMap<String, Map<String, String>>();
+	
+	
+	/**
+	 * a Map that contains the database data.
+	 */
+	private Map<String, List<Map<String, Object>>> dataMap = 
+		new HashMap<String, List<Map<String, Object>>>();
+	
+	/**
+	 * data map iterator.
+	 */
+	private Iterator iterDataMap = dataMap.entrySet().iterator();
 	
 	/**
 	 * Private fields.
