@@ -182,14 +182,11 @@ public class SQLExporter {
 	}
 	
 	public Boolean hasNextDataTable() {
-		logger.info("Hello, in hasNextDataTable");
 		return iterDataMap.hasNext();
 	}
 	
 	public List<Map<String, Object>> nextDataTable() {
 		Entry thisEntry = (Entry) iterDataMap.next();
-		System.out.println(thisEntry.getKey());
-		System.out.println(thisEntry.getValue());
 		return (List<Map<String, Object>>) thisEntry.getValue();
 	}
 	
