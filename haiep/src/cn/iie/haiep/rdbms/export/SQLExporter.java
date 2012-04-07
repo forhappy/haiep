@@ -190,6 +190,11 @@ public class SQLExporter {
 		return (List<Map<String, Object>>) thisEntry.getValue();
 	}
 	
+	public Entry next() {
+		Entry thisEntry = (Entry) iterDataMap.next();
+		return thisEntry;
+	}
+	
 	private void fillDataMap() {
 		//FIXME I've made a maaaaaaaaas...
 		if (metadataMap == null) {
