@@ -13,6 +13,7 @@ public class HaiepAdminTest {
 		HaiepAdmin haiepAdmin = new HaiepAdmin(username, password, url, catalog);
 		
 		haiepAdmin.initialize();
+		haiepAdmin.migrateData();
 		
 	}
 }
