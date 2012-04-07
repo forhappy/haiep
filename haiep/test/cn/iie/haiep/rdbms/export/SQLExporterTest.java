@@ -4,6 +4,9 @@
  */
 package cn.iie.haiep.rdbms.export;
 
+import java.util.List;
+import java.util.Map;
+
 
 public class SQLExporterTest {
 
@@ -17,6 +20,21 @@ public class SQLExporterTest {
 		String catalog = "eid";
 		
 		SQLExporter sqlExporter = new SQLExporter(url, username, password, catalog);
+		int counter = 0;
+		
+		while(sqlExporter.hasNextDataTable()) {
+			System.out.println("========" + counter + "=======");
+			List<Map<String, Object>> list = sqlExporter.nextDataTable();
+			for (int i = 0; i < list.size(); i++) {
+				Map<String, Object> map = list.get(i);
+				for (Map.Entry<String, Object> m : map.entrySet()) {
+					System.out.println("Key: " + m.getKey());
+					System.out.println("Value: " + m.getValue());
+				}
+			}
+			counter ++;
+			
+		}
 		
 
 	}
