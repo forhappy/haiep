@@ -43,7 +43,7 @@ public class HaiepAdminMTTest {
 		int cpuCoreNumber;
 		
 		cpuCoreNumber = Runtime.getRuntime().availableProcessors();
-		executor = Executors.newFixedThreadPool(cpuCoreNumber * 2);
+		executor = Executors.newFixedThreadPool(cpuCoreNumber * 4);
 		
 		HaiepAdmin haiepAdmin = new HaiepAdmin(username, password, url, catalog);
 		/**
