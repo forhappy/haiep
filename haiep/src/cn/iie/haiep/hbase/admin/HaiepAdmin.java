@@ -1,6 +1,7 @@
 package cn.iie.haiep.hbase.admin;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -57,6 +58,16 @@ public class HaiepAdmin {
 	private String url = null;
 	
 	private String catalog = null;
+	
+	/**
+	 * write buffer size.
+	 */
+	private static final int WRITE_BUFFER_SIZE = 1024 * 1024 * 128;
+	
+	/**
+	 *number of records in a list puts.  
+	 */
+	private static final int LIST_PUTS_COUNTER = 5000;
 	
 	/**
 	 * @return the username
@@ -246,7 +257,6 @@ public class HaiepAdmin {
 			 */
 			HTable table = (HTable) pool.getTable(tableName);
 			
-			
 			for (int i = 0; i < list.size(); i++) {
 				
 				Put put = new Put((new Integer(i)).toString().getBytes());
@@ -254,11 +264,9 @@ public class HaiepAdmin {
 				Map<String, Object> map = list.get(i);
 				for (Map.Entry<String, Object> m : map.entrySet()) {
 					
-					put.add(FAMILY.getBytes(), m.getKey().getBytes(), m.getValue().toString().getBytes());
-					
+					put.add(FAMILY.getBytes(), m.getKey().getBytes(), m.getValue().toString().getBytes());	
 //					System.out.println("Key: " + m.getKey());
-//					System.out.println("Value: " + m.getValue());
-					
+//					System.out.println("Value: " + m.getValue());		
 				}
 				try {
 					table.put(put);
@@ -267,11 +275,68 @@ public class HaiepAdmin {
 					e.printStackTrace();
 				}
 			}
-			
-			
 		}
-		
-		
+	}
+	/**
+	 * Migrate table by list puts.
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public void migrateDataByBatch() {
+		pool = new HTablePool(conf, 1024);
+		SQLExporter sqlExporter = 
+			new SQLExporter(url, username, password, catalog);
+		while(sqlExporter.hasNextDataTable()) {
+			Entry entry = sqlExporter.next();
+			String tableName = REGION + "." + (String) entry.getKey();
+			List<Map<String, Object>> list = (List<Map<String, Object>>) entry.getValue();
+			/**
+			 * table to migrate data.
+			 */
+			HTable table = (HTable) pool.getTable(tableName);
+			
+			/**
+			 * set write buffer size.
+			 */
+			try {
+				table.setWriteBufferSize(WRITE_BUFFER_SIZE);
+				table.setAutoFlush(false);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			int counter = 0;
+			List<Put> puts = new ArrayList<Put>();
+			
+			for (int i = 0; i < list.size(); i++) {
+				
+				Put put = new Put((new Integer(i)).toString().getBytes());
+				
+				Map<String, Object> map = list.get(i);
+				counter ++;
+				/**
+				 * add one row to be put.
+				 */
+				for (Map.Entry<String, Object> m : map.entrySet()) {	
+					put.add(FAMILY.getBytes(), m.getKey().getBytes(), 
+							m.getValue().toString().getBytes());	
+	
+				}
+				/**
+				 * add `put` to list puts. 
+				 */
+				puts.add(put);
+				
+				if ((counter % LIST_PUTS_COUNTER == 0) || (i == list.size() - 1)) {
+					try {
+						table.put(puts);
+						table.flushCommits();
+						puts.clear();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				} else continue;
+			}
+		}
 	}
 
 	public void flush() throws IOException {

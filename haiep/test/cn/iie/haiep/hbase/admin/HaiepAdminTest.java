@@ -27,8 +27,18 @@ public class HaiepAdminTest {
 		haiepAdmin.initialize();
 		log("Scheam created...");
 		
+		/**
+		 * migrate data put by put.
+		 */
+//		log("Migration Launching...");
+//		haiepAdmin.migrateData();
+//		log("Migration Finished...");
+		
+		/**
+		 * migrate data by list puts.
+		 */
 		log("Migration Launching...");
-		haiepAdmin.migrateData();
+		haiepAdmin.migrateDataByBatch();
 		log("Migration Finished...");
 		
 	}
