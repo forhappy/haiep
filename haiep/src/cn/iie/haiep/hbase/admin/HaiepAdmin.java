@@ -24,7 +24,6 @@ import cn.iie.haiep.hbase.value.HColumn;
 import cn.iie.haiep.hbase.value.HValue;
 import cn.iie.haiep.rdbms.export.SQLExporter;
 import cn.iie.haiep.rdbms.metadata.Database;
-import cn.iie.haiep.rdbms.metadata.RowSchema;
 import cn.iie.haiep.rdbms.metadata.Table;
 
 public class HaiepAdmin {
@@ -214,7 +213,7 @@ public class HaiepAdmin {
 	}
 	
 	public void put(String tableName, HKey key, HValue value) {
-		HTablePool pool = new HTablePool(conf, 1024);
+		pool = new HTablePool(conf, 1024);
 		HTable table = (HTable) pool.getTable(tableName);
 		
 		Put put = new Put(key.getRow());
@@ -233,8 +232,9 @@ public class HaiepAdmin {
 		}
 	}
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void migrateData() {
-		HTablePool pool = new HTablePool(conf, 1024);
+		pool = new HTablePool(conf, 1024);
 		SQLExporter sqlExporter = 
 			new SQLExporter(url, username, password, catalog);
 		while(sqlExporter.hasNextDataTable()) {
