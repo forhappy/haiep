@@ -160,10 +160,10 @@ public class SQLMetaExporter {
 		String query = "select * from " + tableName;
 		try {
 			pstmt = (PreparedStatement) conn.prepareStatement(query);
+//			rs = pstmt.executeQuery();
 //			pstmt.setString(1, tableName);
-			rs = pstmt.executeQuery();
 			preStmtsMap.put(tableName, pstmt);
-			resultsetMap.put(tableName, rs);
+//			resultsetMap.put(tableName, rs);
 		} catch (SQLException e) {
 			RDBMSDriverManager.closeQuietly(pstmt);
 			RDBMSDriverManager.closeQuietly(rs);
@@ -216,7 +216,9 @@ public class SQLMetaExporter {
 		Map<String, String> columnMetadataMap = metadataMap.get(tableName);
 		List<Map<String, Object>> listData = new ArrayList<Map<String, Object>>();
 		try {
-			ResultSet rs = resultsetMap.get(tableName);
+			PreparedStatement pstmt = preStmtsMap.get(tableName);
+			ResultSet rs = pstmt.executeQuery();
+//			ResultSet rs = resultsetMap.get(tableName);
 			while (rs.next()) {
 				Map<String, Object> map = new HashMap<String, Object>();
 
