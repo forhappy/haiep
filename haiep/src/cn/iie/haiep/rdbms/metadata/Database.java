@@ -296,7 +296,11 @@ public class Database {
 	private void generateTables() {
 		try {
 			DatabaseMetaData dbmd = conn.getMetaData();
-			rsTables = dbmd.getTables(catalog, null, null, null);
+//			rsTables = dbmd.getTables(catalog, null, null, null);
+			/**
+			 * ORACLE trades it differently... 
+			 */
+			rsTables = dbmd.getTables(catalog, "AUTONYM", null, new String[]{"TABLE"});
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -319,6 +323,11 @@ public class Database {
 	
 	public Table next() {
 		return (Table) iterTable.next();
+	}
+	
+	@SuppressWarnings("rawtypes")
+	public Iterator iterator() {
+		return listTables.iterator();
 	}
 	
 	private Iterator<Table> iterTable = null;

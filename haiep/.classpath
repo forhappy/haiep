@@ -17,5 +17,7 @@
 	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/slf4j-log4j12-1.5.8.jar"/>
 	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/sqlbuilder-2.0.11.jar"/>
 	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/zookeeper-3.4.2.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/gson-2.2.1.jar"/>
+	<classpathentry kind="lib" path="/home/forhappy/SCM-Repos/GIT/Haiep/haiep/lib/ojdbc6_g.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

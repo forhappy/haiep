@@ -3,6 +3,7 @@ package cn.iie.haiep.hbase.value;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

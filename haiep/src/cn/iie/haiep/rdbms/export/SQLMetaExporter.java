@@ -17,8 +17,9 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mysql.jdbc.PreparedStatement;
+import java.sql.PreparedStatement;
 
+import cn.iie.haiep.hbase.query.Constants;
 import cn.iie.haiep.rdbms.driver.RDBMSDriverManager;
 import cn.iie.haiep.rdbms.metadata.Column;
 import cn.iie.haiep.rdbms.metadata.Database;
@@ -39,6 +40,10 @@ public class SQLMetaExporter {
 	 */
 	public Map<String, ResultSet> getResultsetMap() {
 		return resultsetMap;
+	}
+
+	public Map<String, PreparedStatement> getPreStmtsMap() {
+		return preStmtsMap;
 	}
 
 	/**
@@ -64,8 +69,8 @@ public class SQLMetaExporter {
 		try {
 			logger.info("Initializing SQLMetaExporter...");
 			driver = new RDBMSDriverManager();
-			conn = RDBMSDriverManager.createConnection(this.url, this.user,
-					this.password);
+//			conn = RDBMSDriverManager.createConnection(this.url, this.user, this.password);
+			conn = RDBMSDriverManager.createOracleConnection(this.url, this.user, this.password);
 //			stmt = conn.createStatement();
 			/**
 			 * fill metadata.
@@ -84,6 +89,7 @@ public class SQLMetaExporter {
 //			RDBMSDriverManager.closeQuietly(stmt);
 			e.printStackTrace();
 		}
+		logger.info("SQLMetaExporter initialization finished...");
 	}
 	
 	public void close() {
@@ -154,57 +160,8 @@ public class SQLMetaExporter {
 		this.catalog = catalog;
 	}
 	
-	private void generateFields(String tableName) {
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		String query = "select * from " + tableName;
-		try {
-			pstmt = (PreparedStatement) conn.prepareStatement(query);
-//			rs = pstmt.executeQuery();
-//			pstmt.setString(1, tableName);
-			preStmtsMap.put(tableName, pstmt);
-//			resultsetMap.put(tableName, rs);
-		} catch (SQLException e) {
-			RDBMSDriverManager.closeQuietly(pstmt);
-			RDBMSDriverManager.closeQuietly(rs);
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		}
-		
-	}
-	
-	private void fillStatements() {
-		for (Map.Entry<String, Map<String, String>> m : metadataMap.entrySet()) {
-			String tableName = m.getKey();
-			generateFields(tableName);
-		}
-	}
-	
-	/**
-	 * fill metadata, the class Database database. 
-	 */
-	private void fillMetadataMap() {
-		database = new Database(url, user, password, catalog);
-		database.fillTableLists();
-		
-		while(database.hasNextTable()) {
-			Table tbl = database.next();
-			String tableName = tbl.getTableName();
-			RowSchema rowSchema = tbl.getRowSchema();
-			Map<String, String> columnMap = new HashMap<String, String>();
-			while (rowSchema.hasNextColumn()) {
-				Column column = rowSchema.next();
-				String columnName = column.getColumnName();
-				String typeName = column.getTypeName();
-				columnMap.put(columnName, typeName);
-				
-			}
-			/**
-			 * put table name and columnMap.
-			 */
-			metadataMap.put(tableName, columnMap);
-		}
-		iterMetaMap = metadataMap.entrySet().iterator();
+	public Database getDatabase() {
+		return database;
 	}
 	
 	/**
@@ -235,8 +192,10 @@ public class SQLMetaExporter {
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
+		logger.info("Building table " + tableName);
 		return listData;
 	}
+	
 	
 	public Boolean hasNextTable() {
 		return iterMetaMap.hasNext();
@@ -246,6 +205,93 @@ public class SQLMetaExporter {
 	public String nextTable() {
 		Entry thisEntry = (Entry) iterMetaMap.next();
 		return (String) thisEntry.getKey();
+	}
+
+	private void generateFields(String tableName, String catalog, String schem) {
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+//		String query = "select * from " + catalog + "." + schem + "." + tableName;
+		String query = "select * from " + schem + "." + tableName;
+		logger.info("Building query: " + query);
+		try {
+			pstmt = (PreparedStatement) conn.prepareStatement(query);
+//			pstmt.setString(1, tableName);
+//			rs = pstmt.executeQuery();
+			preStmtsMap.put(tableName, pstmt);
+//			resultsetMap.put(tableName, rs);
+		} catch (SQLException e) {
+			RDBMSDriverManager.closeQuietly(pstmt);
+			RDBMSDriverManager.closeQuietly(rs);
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		
+	}
+	
+	private void generateFields(String tableName, String catalog, String schem,
+			Boolean onlyTargetTable) {
+		if (Constants.TARGET_TALBE.contains(tableName.toLowerCase())) return;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+//		String query = "select * from " + catalog + "." + schem + "." + tableName;
+		String query = "select * from " + schem + "." + tableName;
+		logger.info("Building query: " + query);
+		try {
+			pstmt = (PreparedStatement) conn.prepareStatement(query);
+//			pstmt.setString(1, tableName);
+//			rs = pstmt.executeQuery();
+			preStmtsMap.put(tableName, pstmt);
+//			resultsetMap.put(tableName, rs);
+		} catch (SQLException e) {
+			RDBMSDriverManager.closeQuietly(pstmt);
+			RDBMSDriverManager.closeQuietly(rs);
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		
+	}
+	
+	private void fillStatements() {
+//		for (Map.Entry<String, Map<String, String>> m : metadataMap.entrySet()) {
+//		String tableName = m.getKey();
+//		generateFields(tableName);
+//	}
+		@SuppressWarnings("rawtypes")
+		Iterator iter = database.iterator();
+		while (iter.hasNext()) {
+			Table table = (Table) iter.next();
+			String catalog = table.getTableCatalog();
+			String schme = table.getTableSchema();
+			String tableName = table.getTableName();
+			generateFields(tableName, catalog, schme, true);
+		}
+	}
+	
+	/**
+	 * fill metadata, the class Database database. 
+	 */
+	private void fillMetadataMap() {
+		database = new Database(url, user, password, catalog);
+		database.fillTableLists();
+		
+		while(database.hasNextTable()) {
+			Table tbl = database.next();
+			String tableName = tbl.getTableName();
+			RowSchema rowSchema = tbl.getRowSchema();
+			Map<String, String> columnMap = new HashMap<String, String>();
+			while (rowSchema.hasNextColumn()) {
+				Column column = rowSchema.next();
+				String columnName = column.getColumnName();
+				String typeName = column.getTypeName();
+				columnMap.put(columnName, typeName);
+				
+			}
+			/**
+			 * put table name and columnMap.
+			 */
+			metadataMap.put(tableName, columnMap);
+		}
+		iterMetaMap = metadataMap.entrySet().iterator();
 	}
 	
 	/**
@@ -281,5 +327,5 @@ public class SQLMetaExporter {
 	 * logger.
 	 */
 	private static final Logger logger = 
-		LoggerFactory.getLogger(SQLExporter.class);
+		LoggerFactory.getLogger(SQLMetaExporter.class);
 }

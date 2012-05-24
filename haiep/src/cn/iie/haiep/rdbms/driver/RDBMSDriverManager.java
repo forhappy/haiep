@@ -2,6 +2,8 @@ package cn.iie.haiep.rdbms.driver;
 
 import java.sql.*;
 
+import oracle.jdbc.pool.OracleDataSource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,7 +88,9 @@ public class RDBMSDriverManager {
 	public Connection createConnection() throws SQLException {
 		Connection conn = null;
 		try {
-			Class.forName("com.mysql.jdbc.Driver").newInstance();
+//			Class.forName("com.mysql.jdbc.Driver").newInstance();
+//			Class.forName("dm.jdbc.driver.DmDriver").newInstance();
+			Class.forName("oracle.jdbc.OracleDriver").newInstance();
 			conn = DriverManager.getConnection(this.url, this.user,
 					this.password);
 			return conn;
@@ -113,7 +117,9 @@ public class RDBMSDriverManager {
 	public Connection createConnection(String url) throws SQLException {
 		Connection conn = null;
 		try {
-			Class.forName("com.mysql.jdbc.Driver").newInstance();
+//			Class.forName("com.mysql.jdbc.Driver").newInstance();
+//			Class.forName("dm.jdbc.driver.DmDriver").newInstance();
+			Class.forName("oracle.jdbc.OracleDriver").newInstance();
 			conn = DriverManager.getConnection(url);
 			return conn;
 		} catch (SQLException e) {
@@ -146,7 +152,9 @@ public class RDBMSDriverManager {
 			java.util.Properties prop) throws SQLException {
 		Connection conn = null;
 		try {
-			Class.forName("com.mysql.jdbc.Driver").newInstance();
+//			Class.forName("com.mysql.jdbc.Driver").newInstance();
+//			Class.forName("dm.jdbc.driver.DmDriver").newInstance();
+			Class.forName("oracle.jdbc.OracleDriver").newInstance();
 			conn = DriverManager.getConnection(url, prop);
 			return conn;
 		} catch (SQLException e) {
@@ -173,11 +181,48 @@ public class RDBMSDriverManager {
 	 * @throws SQLException
 	 *             if a database access error occurs.
 	 */
+	public static Connection createOracleConnection(String url, String user,
+			String password) throws SQLException {
+		Connection conn = null;
+		try {
+			DriverManager.registerDriver( new oracle.jdbc.driver.OracleDriver());
+			OracleDataSource ods = new OracleDataSource();
+			ods.setURL(url);
+			ods.setUser(user);
+			ods.setPassword(password);
+			conn = ods.getConnection();
+			return conn;
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			return null;
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Attempts to establish a connection to the given database URL.
+	 * 
+	 * @param url
+	 *            a database url of the form "jdbc:subprotocol:subname".
+	 * @param user
+	 *            the database user on whose behalf the connection is being made.
+	 * @param password
+	 *            the user's password.
+	 * @return a connection to the URL.
+	 * @throws SQLException
+	 *             if a database access error occurs.
+	 */
 	public static Connection createConnection(String url, String user,
 			String password) throws SQLException {
 		Connection conn = null;
 		try {
-			Class.forName("com.mysql.jdbc.Driver").newInstance();
+//			Class.forName("com.mysql.jdbc.Driver").newInstance();
+//			Class.forName("dm.jdbc.driver.DmDriver").newInstance();
+			Class.forName("oracle.jdbc.OracleDriver").newInstance();
 			conn = DriverManager.getConnection(url, user, password);
 			return conn;
 		} catch (SQLException e) {

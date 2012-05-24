@@ -1,10 +1,13 @@
 package cn.iie.haiep.hbase.admin;
 
 import java.io.IOException;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -21,7 +24,8 @@ import org.apache.hadoop.hbase.client.Put;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mysql.jdbc.PreparedStatement;
+import java.sql.PreparedStatement;
+import java.text.SimpleDateFormat;
 
 import cn.iie.haiep.hbase.key.HKey;
 import cn.iie.haiep.hbase.store.HBaseTableInfo;
@@ -64,15 +68,17 @@ public class HaiepExporter {
 	
 	private String catalog = null;
 	
+	private SQLMetaExporter sqlMetaExporter = null;
+	
 	/**
 	 * write buffer size.
 	 */
-	private static final int WRITE_BUFFER_SIZE = 1024 * 1024 * 128;
+	private static final int WRITE_BUFFER_SIZE = 1024 * 1024 * 256;
 	
 	/**
 	 *number of records in a list puts.  
 	 */
-	private static final int LIST_PUTS_COUNTER = 5000;
+	private static final int LIST_PUTS_COUNTER = 500;
 	
 	/**
 	 * @return the username
@@ -131,12 +137,29 @@ public class HaiepExporter {
 		this.password = password;
 		this.url = url;
 		this.catalog = catalog;
+		sqlMetaExporter = new SQLMetaExporter(url, username, password, catalog);
 	}
 	
 	public HaiepExporter() {
 	}
 	
+	/**
+	 * Get HBaseConfigInfo manually
+	 *
+	 * @return
+	 */
+	public Configuration getConfig(){
+		Configuration hbaseConfig =  new Configuration();
+//		hbaseConfig.set("hbase.zookeeper.quorum", "cloud006,cloud007,cloud008");
+		hbaseConfig.set("hbase.zookeeper.quorum", "master,slave");
+		hbaseConfig.set("hbase.zookeeper.property.clientPort", "2181");
+		Configuration config = new Configuration();
+		config = HBaseConfiguration.create(hbaseConfig);
+		return config;
+	}
+	
 	public void initialize() {
+//		this.conf = getConfig();
 		this.conf = HBaseConfiguration.create();
 		try {
 			this.admin = new HBaseAdmin(conf);
@@ -261,8 +284,8 @@ public class HaiepExporter {
 			 * table to migrate data.
 			 */
 			HTable table = (HTable) pool.getTable(tableName);
-			
-			for (int i = 0; i < list.size(); i++) {
+			int size = list.size();
+			for (int i = 0; i < size; i++) {
 				
 				Put put = new Put((new Integer(i)).toString().getBytes());
 				
@@ -312,8 +335,8 @@ public class HaiepExporter {
 			
 			int counter = 0;
 			List<Put> puts = new ArrayList<Put>();
-			
-			for (int i = 0; i < list.size(); i++) {
+			int size = list.size();
+			for (int i = 0; i < size; i++) {
 				
 				Put put = new Put((new Integer(i)).toString().getBytes());
 				
@@ -332,7 +355,7 @@ public class HaiepExporter {
 				 */
 				puts.add(put);
 				
-				if ((counter % LIST_PUTS_COUNTER == 0) || (i == list.size() - 1)) {
+				if ((counter % LIST_PUTS_COUNTER == 0) || (i == size - 1)) {
 					try {
 						table.put(puts);
 						table.flushCommits();
@@ -369,8 +392,8 @@ public class HaiepExporter {
 
 		int counter = 0;
 		List<Put> puts = new ArrayList<Put>();
-
-		for (int i = 0; i < list.size(); i++) {
+		int size = list.size();
+		for (int i = 0; i < size; i++) {
 
 			Put put = new Put((new Integer(i)).toString().getBytes());
 
@@ -380,16 +403,19 @@ public class HaiepExporter {
 			 * add one row to be put.
 			 */
 			for (Map.Entry<String, Object> m : map.entrySet()) {
-				put.add(FAMILY.getBytes(), m.getKey().getBytes(), m.getValue()
-						.toString().getBytes());
-
+				Object qualifier = m.getKey();
+				Object value = m.getValue();
+				if (qualifier != null && value !=null)
+					put.add(FAMILY.getBytes(), qualifier.toString().getBytes(), value.toString().getBytes());
+				else if (qualifier != null && value ==null)
+					put.add(FAMILY.getBytes(), qualifier.toString().getBytes(), null);
 			}
 			/**
 			 * add `put` to list puts.
 			 */
 			puts.add(put);
 
-			if ((counter % LIST_PUTS_COUNTER == 0) || (i == list.size() - 1)) {
+			if ((counter % LIST_PUTS_COUNTER == 0) || (i == size - 1)) {
 				try {
 					table.put(puts);
 					table.flushCommits();
@@ -403,13 +429,78 @@ public class HaiepExporter {
 	}
 
 	public void export() {
-		SQLMetaExporter sqlMetaExporter = 
-			new SQLMetaExporter(url, username, password, catalog);
 		while(sqlMetaExporter.hasNextTable()) {
 			String tableName = sqlMetaExporter.nextTable();
+			logger.info("Importing table " + tableName + "...");
 			List<Map<String, Object>> list = sqlMetaExporter.buildTableInMemory(tableName);
 			migrateDataByBatch(tableName, list);
 			logger.info("Table " + tableName + " imported!");
+		}
+	}
+	
+	public void export(int rowNum) {
+		while(sqlMetaExporter.hasNextTable()) {
+			String tableName = sqlMetaExporter.nextTable();
+			
+			PreparedStatement pstmt = sqlMetaExporter.getPreStmtsMap().get(tableName);
+			if (pstmt == null) {
+				logger.info("Skipping importing table " + tableName + "...");
+				continue;
+			}
+			try {
+				ResultSet rs = pstmt.executeQuery();
+				logger.info("Beginning importing table " + tableName + "...");
+				exportTableFromResultSet(tableName, rs, rowNum);
+			} catch (SQLException e) {
+				logger.info(e.getMessage());
+				e.printStackTrace();
+			}
+			logger.info("Table " + tableName + " imported!");
+		}
+	}
+	
+	/**
+	 * export data from resultset directly.
+	 * @param tableName
+	 * @return a list structure that contains all data records in the RDBMS.
+	 */
+	private void exportTableFromResultSet(String tableName, ResultSet rs, int rowNum) {
+		Map<String, String> columnMetadataMap = sqlMetaExporter.getMetadataMap().get(tableName);
+		List<Map<String, Object>> listData = new ArrayList<Map<String, Object>>();
+		int counter = 0;
+		try {
+			while (rs.next()) {
+				counter++;
+				Map<String, Object> map = new HashMap<String, Object>();
+
+				for (Map.Entry<String, String> columnMap : columnMetadataMap
+						.entrySet()) {
+					String columnLabel = columnMap.getKey();
+					Object object = rs.getObject(columnLabel);
+					//convert orcale timestamp to java date.
+					if (object instanceof oracle.sql.TIMESTAMP) {
+						oracle.sql.TIMESTAMP timeStamp = (oracle.sql.TIMESTAMP) object;
+						Timestamp tt = timeStamp.timestampValue();
+						Date date = new Date(tt.getTime());
+						SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+						String timestamp = sdf.format(date);
+						map.put(columnLabel, timestamp);
+					} else 
+						map.put(columnLabel, object);
+				}
+				listData.add(map);
+				if (counter % rowNum == 0) {
+					migrateDataByBatch(tableName, listData);
+					listData.clear();
+				} else continue;
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} finally {
+			migrateDataByBatch(tableName, listData);
+			listData.clear();
 		}
 	}
 	
@@ -436,19 +527,32 @@ public class HaiepExporter {
 	/**
 	 * Initializing tableInfo
 	 */
+	@SuppressWarnings("rawtypes")
 	private void initTableInfo() {
-		Database db = new Database(url, username, password, catalog);
-		db.fillTableLists();
-		while (db.hasNextTable()) {
-			Table tbl = db.next();
-			
+//		Database db = new Database(url, username, password, catalog);
+//		db.fillTableLists();
+		Database db = sqlMetaExporter.getDatabase();
+		Iterator iter = db.iterator();
+		while (iter.hasNext()) {
+			Table table = (Table) iter.next();
 			/**
 			 * Get table name.
 			 */
-			String tableName = REGION + "." + tbl.getTableName();
+			String tableName = REGION + "." + table.getTableName();
 			addTableName(tableName);
 			addTable(tableName);
 			addColumnFamily(tableName, null);
 		}
+//		while (db.hasNextTable()) {
+//			Table tbl = db.next();
+//			
+//			/**
+//			 * Get table name.
+//			 */
+//			String tableName = REGION + "." + tbl.getTableName();
+//			addTableName(tableName);
+//			addTable(tableName);
+//			addColumnFamily(tableName, null);
+//		}
 	}
 }

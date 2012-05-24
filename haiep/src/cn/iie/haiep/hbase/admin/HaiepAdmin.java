@@ -131,8 +131,23 @@ public class HaiepAdmin {
 	public HaiepAdmin() {
 	}
 	
+	/**
+	 * Get HBaseConfigInfo manually
+	 *
+	 * @return
+	 */
+	public Configuration getConfig(){
+		Configuration hbaseConfig =  new Configuration();
+		hbaseConfig.set("hbase.zookeeper.quorum", "cloud006,cloud007,cloud008");
+		hbaseConfig.set("hbase.zookeeper.property.clientPort", "2181");
+		Configuration config = new Configuration();
+		config = HBaseConfiguration.create(hbaseConfig);
+		return config;
+	}
+	
 	public void initialize() {
-		this.conf = HBaseConfiguration.create();
+		this.conf = getConfig();
+//		this.conf = HBaseConfiguration.create();
 		try {
 			this.admin = new HBaseAdmin(conf);
 			tableInfo = new HBaseTableInfo();

@@ -50,7 +50,7 @@ public class RowSchema {
 		this.listColumns = listColumns;
 	}
 
-	public void fillRowSchema(Connection conn, String tableName)
+	public void fillRowSchema(Connection conn, String catalog, String schema, String tableName)
 			throws IOException {
 		if (conn == null) {
 			logger.info("Connection should not be null");
@@ -62,8 +62,8 @@ public class RowSchema {
 		/**
 		 * connect and generate columns
 		 */
-		generateColumns(conn, tableName);
-		generatePrimaryKeys(conn, tableName);
+		generateColumns(conn, catalog, schema, tableName);
+		generatePrimaryKeys(conn, catalog, schema, tableName);
 		while (nextColumn()) {
 			addColumn();
 		}
@@ -115,7 +115,7 @@ public class RowSchema {
 			 */
 			addColumn(column);
 		} catch (SQLException e) {
-			logger.error(e.getMessage());
+			logger.warn(e.getMessage());
 			e.printStackTrace();
 		}
 	}
@@ -138,10 +138,10 @@ public class RowSchema {
 	 * @return the listColumns
 	 */
 
-	private void generateColumns(Connection conn, String tableName) {
+	private void generateColumns(Connection conn, String catalog, String schema, String tableName) {
 		try {
 			DatabaseMetaData dbmd = conn.getMetaData();
-			rsColumns = dbmd.getColumns(null, null, tableName, null);
+			rsColumns = dbmd.getColumns(catalog, schema, tableName, null);
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -181,10 +181,10 @@ public class RowSchema {
 		}
 	}
 
-	private void generatePrimaryKeys(Connection conn, String tableName) {
+	private void generatePrimaryKeys(Connection conn, String catalog, String schema, String tableName) {
 		try {
 			DatabaseMetaData dbmd = conn.getMetaData();
-			rsPrimaryKeys = dbmd.getPrimaryKeys(null, null, tableName);
+			rsPrimaryKeys = dbmd.getPrimaryKeys(catalog, schema, tableName);
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();

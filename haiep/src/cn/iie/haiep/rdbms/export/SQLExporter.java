@@ -4,6 +4,7 @@
  */
 package cn.iie.haiep.rdbms.export;
 
+import java.sql.PreparedStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,8 +18,6 @@ import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.mysql.jdbc.PreparedStatement;
 
 import cn.iie.haiep.rdbms.driver.RDBMSDriverManager;
 import cn.iie.haiep.rdbms.metadata.Column;
@@ -196,7 +195,7 @@ public class SQLExporter {
 	}
 	
 	private void fillDataMap() {
-		//FIXME I've made a maaaaaaaaas...
+		//FIXME I've made a maaaaaaaaass...
 		if (metadataMap == null) {
 			logger.debug("Internal Error occured in SQLExporter.");
 			return;
@@ -204,7 +203,7 @@ public class SQLExporter {
 		for (Map.Entry<String, Map<String, String>> m : metadataMap.entrySet()) {
 			String tableName = m.getKey();
 			Map<String, String> columnMetadataMap = m.getValue();
-			List<Map<String, Object>> listData = new ArrayList<Map<String,Object>>();
+			List<Map<String, Object>> listData = new ArrayList<Map<String, Object>>();
 			try {
 				ResultSet rs = resultsetMap.get(tableName);
 				while(rs.next()) {

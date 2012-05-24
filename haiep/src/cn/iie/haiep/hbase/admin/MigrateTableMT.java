@@ -67,8 +67,24 @@ public class MigrateTableMT implements Runnable{
 	public MigrateTableMT() {
 	}
 	
+	/**
+	 * Get HBaseConfigInfo manually
+	 *
+	 * @return
+	 */
+	public Configuration getConfig(){
+		Configuration HBase_Config =  new Configuration();
+		HBase_Config.set("hbase.zookeeper.quorum", "cloud006,cloud007,cloud008");
+		HBase_Config.set("hbase.zookeeper.property.clientPort", "2181");
+		Configuration config = new Configuration();
+		config = HBaseConfiguration.create(HBase_Config);
+		return config;
+	}
+	
 	public void initialize() {
-		this.conf = HBaseConfiguration.create();
+//		this.conf = HBaseConfiguration.create();
+		this.conf = getConfig();
+//		conf.set("hbase.zookeeper.quorum", "cloud006,cloud007,cloud008");
 		pool = new HTablePool(conf, 1024);
 	}
 	
@@ -85,7 +101,7 @@ public class MigrateTableMT implements Runnable{
 		 */
 		HTable table = (HTable) pool.getTable(tableNamePacked);
 
-		/**
+		/**w
 		 * set write buffer size.
 		 */
 		try {

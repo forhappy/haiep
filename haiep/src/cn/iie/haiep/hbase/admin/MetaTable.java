@@ -47,6 +47,14 @@ public class MetaTable {
 	 */
 	public static final String REGION = "HAIEP";
 	
+	//Definition of the Columns of Schema management table
+	public static final String DATATYPE = "T";
+	public static final String DATALEN = "D";
+	public static final String ISNULL = "N";
+	public static final String ISKEY = "K";
+	public static final String LABLELEN = "LL";
+	public static final String DEFAULTVALUE = "DV";
+	
 	/**
 	 * @return the family
 	 */
@@ -59,6 +67,20 @@ public class MetaTable {
 	 */
 	public static String getRegion() {
 		return REGION;
+	}
+	
+	/**
+	 * Get HBaseConfigInfo manually
+	 *
+	 * @return
+	 */
+	public Configuration getConfig(){
+		Configuration hbaseConfig =  new Configuration();
+		hbaseConfig.set("hbase.zookeeper.quorum", "cloud006,cloud007,cloud008");
+		hbaseConfig.set("hbase.zookeeper.property.clientPort", "2181");
+		Configuration config = new Configuration();
+		config = HBaseConfiguration.create(hbaseConfig);
+		return config;
 	}
 
 	public void importMetadataFromRDBMS(
@@ -93,11 +115,19 @@ public class MetaTable {
 				String rowkey = beginOfRowkey + "." + column.getColumnName();
 				Put put = new Put(rowkey.getBytes());
 				byte[] familyBytes = getFamily().getBytes();
-				put.add(familyBytes, "IsNil".getBytes(), column.getIsNullable().getBytes());
-				put.add(familyBytes, "Type".getBytes(), column.getTypeName().getBytes());
+				put.add(familyBytes, ISNULL.getBytes(), column.getIsNullable().getBytes());
+				put.add(familyBytes, DATATYPE.getBytes(), column.getTypeName().getBytes());
 				Integer len = new Integer(column.getColumnSize());
-				put.add(familyBytes, "Len".getBytes(), len.toString().getBytes());
-				put.add(familyBytes, "IsKey".getBytes(), column.getIsPrimaryKey().toString().getBytes());
+				put.add(familyBytes, DATALEN.getBytes(), len.toString().getBytes());
+				put.add(familyBytes, ISKEY.getBytes(), column.getIsPrimaryKey().toString().getBytes());
+				String columnDefault = column.getColumnDefault();
+				if (columnDefault != null) {
+					put.add(familyBytes, DEFAULTVALUE.getBytes(), columnDefault.toString().getBytes());
+				} else {
+					put.add(familyBytes, DEFAULTVALUE.getBytes(), "null".toString().getBytes());
+				}
+				
+				put.add(familyBytes, LABLELEN.getBytes(), column.getIsNullable().toString().getBytes());
 				try {
 					table.put(put);
 				} catch (IOException e) {
@@ -113,7 +143,8 @@ public class MetaTable {
 	 * initialize conf and admin.
 	 */
 	public void initialize() {
-		this.conf = HBaseConfiguration.create();
+		this.conf = getConfig();
+//		this.conf = HBaseConfiguration.create();
 		try {
 			this.admin = new HBaseAdmin(conf);
 			/**

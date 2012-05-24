@@ -27,7 +27,7 @@ public class Table {
 
 	public RowSchema generateRowSchema(Connection conn) {
 		try {
-			row.fillRowSchema(conn, tableName);
+			row.fillRowSchema(conn, tableCatalog, tableSchema, tableName);
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -37,7 +37,7 @@ public class Table {
 	
 	public void fillRowSchema(Connection conn) {
 		try {
-			row.fillRowSchema(conn, tableName);
+			row.fillRowSchema(conn, tableCatalog, tableSchema, tableName);
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
