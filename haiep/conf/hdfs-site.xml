@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+<!-- In: conf/hdfs-site.xml -->
+<property>
+  <name>dfs.replication</name>
+  <value>2</value>
+  <description>Default block replication.
+  The actual number of replications can be specified when the file is created.
+  The default is used if replication is not specified in create time.
+  </description>
+</property>
+
+<property>
+  <name>dfs.name.dir</name>
+  <value>/home/jubao/EID/data/hdfs/name</value>
+</property>
+
+<property>
+  <name>dfs.data.dir</name>
+  <value>/home/jubao/EID/data/hdfs/data</value>
+  <final>true</final>
+</property>
+
+
+<property>
+  <name>fs.checkpoint.dir</name>
+  <value>/home/jubao/EID/data/hdfs/checkpoint</value>
+  <final>true</final>
+</property>
+
+
+<property>
+  <name>dfs.support.append</name>
+  <value>true</value>
+</property>
+
+<property>
+  <name>dfs.datanode.max.xcievers</name>
+  <value>4096</value>
+</property>
+</configuration>
